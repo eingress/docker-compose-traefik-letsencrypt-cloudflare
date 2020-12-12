@@ -5,7 +5,7 @@ networks:
 
 services:
   traefik:
-    hostname: traefik.${DOMAIN}
+    hostname: ${HOSTNAME}
 
     image: traefik:picodon
 
@@ -34,7 +34,7 @@ services:
       - traefik.http.routers.to-https.entrypoints=http
       - traefik.http.routers.to-https.middlewares=to-https
 
-      - traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)
+      - traefik.http.routers.traefik.rule=Host(`${HOSTNAME}`)
       - traefik.http.routers.traefik.entrypoints=https
       - traefik.http.routers.traefik.middlewares=auth
       - traefik.http.routers.traefik.service=api@internal
@@ -54,22 +54,3 @@ services:
     volumes:
       - .data/letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
-
-  whoami:
-    hostname: whoami.${DOMAIN}
-
-    image: containous/whoami
-
-    restart: always
-
-    env_file:
-      - ./.env
-
-    labels:
-      - traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN}`)
-      - traefik.http.routers.whoami.entrypoints=https
-      - traefik.http.routers.whoami.tls=true
-      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
-
-    networks:
-      - public
