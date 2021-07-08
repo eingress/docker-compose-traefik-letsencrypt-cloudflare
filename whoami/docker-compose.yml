@@ -1,8 +1,9 @@
-version: "3.7"
+version: '3'
 
 networks:
-  traefik_public:
-    external: true
+  default:
+    external:
+      name: ${DEFAULT_NETWORK}
 
 services:
   whoami:
@@ -19,7 +20,4 @@ services:
       - traefik.http.routers.${SERVICE_NAME}.tls=true
       - traefik.http.routers.${SERVICE_NAME}.tls.certresolver=letsencrypt
 
-    networks:
-      - traefik_public
-
-    restart: always
+    restart: unless-stopped
