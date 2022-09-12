@@ -14,3 +14,8 @@ Comment out the following line in ```docker-compose.yml``` for production.
 ```yml
 - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 ```
+
+
+### Infrastructure model
+
+![Infrastructure model](.infragenie/infrastructure_model.png)
