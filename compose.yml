@@ -1,13 +1,12 @@
-version: '3'
-
 networks:
   public:
 
+
 services:
-  traefik:
+  main:
     hostname: ${HOST_NAME}
 
-    image: traefik:picodon
+    image: ${TRAEFIK_IMAGE}
 
     restart: always
 
@@ -22,7 +21,7 @@ services:
       - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
       - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=0
-      - --certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
       # !IMPORTANT - COMMENT OUT THE FOLLOWING LINE IN PRODUCTION!
       - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 
@@ -52,5 +51,8 @@ services:
       - 443:443
 
     volumes:
-      - .data/letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/letsencrypt
+
+volumes:
+  traefik_data:
