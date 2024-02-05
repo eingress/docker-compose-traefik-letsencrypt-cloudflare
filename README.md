@@ -5,11 +5,11 @@
 ## Usage
 
 ```sh
-cp .env.dev .env # edit .env as necessary
-docker-compose up -d
+cp example.env .env # edit .env as necessary
+docker compose up -d
 ```
 
-Comment out the following line in ```docker-compose.yml``` for production.
+Comment out the following line in ```compose.yml``` for production.
 
 ```yml
 - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
