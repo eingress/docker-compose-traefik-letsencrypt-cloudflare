@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+# Latest Traefik versions, edit as necessary
+
+TRAEFIK_V2=v2.11
+TRAEFIK_V3=v3.0
+
+# DO NOT EDIT BELOW THIS LINE
+
+pushd() {
+  command pushd "$@" >/dev/null
+}
+
+popd() {
+  command popd "$@" >/dev/null
+}
+
+WORK_DIR="${1:-$(pwd)}"
+
+read -p 'Please enter the dashboard domain name e.g. tfk.eingress.io: ' HOST
+read -p 'Please enter the Cloudflare account email address: ' CF_EMAIL
+read -p 'Please enter the Cloudflare DNS api token: ' CF_TOKEN
+
+while true; do
+
+  read -p 'Should I use Traefik v2 or v3? (2/3): ' VERSION
+
+  case $VERSION in
+  2)
+    TRAEFIK_VERSION=$TRAEFIK_V2
+    break
+    ;;
+  3)
+    TRAEFIK_VERSION=$TRAEFIK_V3
+    break
+    ;;
+  *) echo Please enter 2 or 3 ;;
+  esac
+
+done
+
+read -p 'Traefik dashboard user name: ' USER
+PASSWORD=$(openssl passwd -apr1)
+
+mkdir -p $WORK_DIR
+pushd $WORK_DIR
+
+echo '' | tee .env .htpasswd
+
+echo "CF_API_EMAIL=${CF_EMAIL}" >>.env
+echo "CF_API_TOKEN=${CF_TOKEN}" >>.env
+echo "HOST_NAME=${HOST}" >>.env
+echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_VERSION}" >>.env
+
+echo "$USER:$PASSWORD" >>.htpasswd
+
+cat <<-EOF >compose.yml
+
+networks:
+  global:
+
+services:
+
+  main:
+
+    command:
+      - --api=true
+      - --api.dashboard=true
+
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=0
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
+
+      - --certificatesresolvers.letsencrypt.acme.email=\${CF_API_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+
+      - --providers.docker=true
+
+      # !!! IMPORTANT! Comment out or delete next line in production! !!!
+      - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+
+    env_file:
+      - ./.env
+
+    environment:
+      - CLOUDFLARE_DNS_API_TOKEN=\${CF_API_TOKEN}
+
+    hostname: \${HOST_NAME}
+
+    image: \${TRAEFIK_IMAGE}
+
+    labels:
+      - traefik.http.middlewares.auth.basicauth.usersFile=/etc/traefik/.htpasswd
+      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
+
+      - traefik.http.routers.to-https.entrypoints=http
+      - traefik.http.routers.to-https.middlewares=to-https
+      - traefik.http.routers.to-https.rule=HostRegexp(\`{host:.+}\`)
+
+      - traefik.http.routers.traefik.entrypoints=https
+      - traefik.http.routers.traefik.middlewares=auth
+      - traefik.http.routers.traefik.rule=Host(\`\${HOST_NAME}\`)
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
+      - traefik.http.routers.traefik.tls=true
+
+    networks:
+      - global
+
+    ports:
+      - 80:80
+      - 443:443
+
+    restart: unless-stopped
+
+    volumes:
+      - .htpasswd:/etc/traefik/.htpasswd
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+      - acme:/letsencrypt
+
+volumes:
+  acme:
+
+
+EOF
+
+echo "Created .env, .htpasswd, and compose.yml files in ${WORK_DIR}"
+echo "Thanks for using!"
+
+popd
+
+exit 0
