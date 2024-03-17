@@ -1,4 +1,3 @@
-version: '3'
 
 networks:
   default:
@@ -6,18 +5,20 @@ networks:
       name: ${DEFAULT_NETWORK}
 
 services:
+
   whoami:
+
     env_file:
       - ./.env
 
-    image: ${IMAGE_NAME}
-
     hostname: ${HOST_NAME}
 
+    image: ${IMAGE_NAME}
+
     labels:
-      - traefik.http.routers.${SERVICE_NAME}.rule=Host(`${HOST_NAME}`)
       - traefik.http.routers.${SERVICE_NAME}.entrypoints=https
-      - traefik.http.routers.${SERVICE_NAME}.tls=true
+      - traefik.http.routers.${SERVICE_NAME}.rule=Host(`${HOST_NAME}`)
       - traefik.http.routers.${SERVICE_NAME}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${SERVICE_NAME}.tls=true
 
     restart: unless-stopped

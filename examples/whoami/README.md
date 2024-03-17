@@ -1,11 +1,10 @@
-# Example Traefik Service
+# Example Traefik  - containous/whoamis
 
 Deploy an instance of [containous/whoami](https://hub.docker.com/r/containous/whoami).
 
 ## Usage
 
 ```sh
-cp .env.dev .env
-docker-compose up -d
+cp example.env .env
+docker compose up -d
 ```
-
