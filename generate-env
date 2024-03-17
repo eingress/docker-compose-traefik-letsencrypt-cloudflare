@@ -126,7 +126,6 @@ services:
 volumes:
   acme:
 
-
 EOF
 
 echo "Created .env, .htpasswd, and compose.yml files in ${WORK_DIR}"
