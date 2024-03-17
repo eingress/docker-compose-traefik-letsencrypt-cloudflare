@@ -1,6 +1,6 @@
 # Docker Compose Traefik + Lets Encrypt + Cloudflare
 
-  A docker compose configuration script for spinning up a [Traefik](https://traefik.io/) instance with [Lets Encrypt DNS-01 challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challengw) supported through [Cloudflare](cloudflare.com).
+  A docker compose configuration script for spinning up a [Traefik](https://traefik.io/) instance with [Lets Encrypt DNS-01 challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) supported through [Cloudflare](cloudflare.com).
 
 ## Usage
 
