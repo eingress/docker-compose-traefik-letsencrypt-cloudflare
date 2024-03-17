@@ -1,4 +1,4 @@
-# Example Traefik  - containous/whoamis
+# Example Traefik Service - containous/whoami
 
 Deploy an instance of [containous/whoami](https://hub.docker.com/r/containous/whoami).
 
