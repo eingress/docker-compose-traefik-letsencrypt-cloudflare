@@ -19,7 +19,7 @@ popd() {
 
 WORK_DIR="${1:-$(pwd)}"
 
-read -p 'Please enter the dashboard domain name e.g. tfk.eingress.io: ' HOST
+read -p 'Please enter the dashboard host name e.g. tfk.eingress.io: ' HOST
 read -p 'Please enter the Cloudflare account email address: ' CF_EMAIL
 read -p 'Please enter the Cloudflare DNS api token: ' CF_TOKEN
 
