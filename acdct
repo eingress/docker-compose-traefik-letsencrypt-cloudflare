@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Acme Cloudflare Docker Compose Traefik generator
+
 # Latest Traefik versions, edit as necessary
 
 TRAEFIK_V2=v2.11

@@ -4,10 +4,10 @@
 
 ## Usage
 
-Generate the required compose, environment variable, and password files using ```generate-env``` (current Traefik versions may be edited at the top of this file)
+Generate the required compose, environment variable, and password files using ```acdct``` (current Traefik versions may be edited at the top of this file)
 
 ```sh
-./generate-env <output directory - defaults to current working directory>
+./acdct <output directory - defaults to current working directory>
 ```
 
 Place compose.yml, .env, and .htpasswd in your chosen directory, then
