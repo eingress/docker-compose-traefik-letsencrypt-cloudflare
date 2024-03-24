@@ -5,6 +5,5 @@ Deploy an instance of [containous/whoami](https://hub.docker.com/r/containous/wh
 ## Usage
 
 ```sh
-cp example.env .env
 docker compose up -d
 ```
