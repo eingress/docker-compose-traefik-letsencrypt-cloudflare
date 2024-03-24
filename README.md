@@ -25,4 +25,4 @@ Comment out the following line in ```compose.yml``` for production.
 - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 ```
 
-See [examples](examples/) for how to configure services.
+See [examples](examples/) for how to configure services, and an example of generated output.
