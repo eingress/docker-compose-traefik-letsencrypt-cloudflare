@@ -56,7 +56,7 @@ echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_VERSION}" >>.env
 
 echo "$USER:$PASSWORD" >>.htpasswd
 
-cat <<-EOF >compose.yml
+cat <<-EOF >compose.yaml
 
 networks:
   global:
@@ -130,7 +130,7 @@ volumes:
 
 EOF
 
-echo "Created .env, .htpasswd, and compose.yml files in ${WORK_DIR}"
+echo "Created .env, .htpasswd, and compose.yaml files in ${WORK_DIR}"
 echo "Thanks for using!"
 
 popd
