@@ -10,7 +10,7 @@ Generate the required compose, environment variable, and password files using ``
 ./acdct <output directory - defaults to current working directory>
 ```
 
-Place compose.yml, .env, and .htpasswd in your chosen directory, then
+Place compose.yaml, .env, and .htpasswd in your chosen directory, then
 
 ```sh
 docker compose pull
@@ -19,7 +19,7 @@ docker compose up -d
 
 ## Important
 
-Comment out the following line in ```compose.yml``` for production.
+Comment out the following line in ```compose.yaml``` for production.
 
 ```yml
 - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
