@@ -79,6 +79,8 @@ services:
 
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
+      - --entryPoints.https.http3
+      - --entryPoints.https.http3.advertisedport=443
 
       - --providers.docker=true
 
@@ -115,7 +117,8 @@ services:
 
     ports:
       - 80:80
-      - 443:443
+      - 443:443/tcp
+      - 443:443/udp
 
     restart: unless-stopped
 
