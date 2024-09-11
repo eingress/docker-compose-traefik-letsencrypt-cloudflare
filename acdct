@@ -5,7 +5,7 @@
 # Latest Traefik versions, edit as necessary
 
 TRAEFIK_V2=v2.11
-TRAEFIK_V3=v3.0
+TRAEFIK_V3=v3.1
 
 # DO NOT EDIT BELOW THIS LINE
 
