@@ -2,10 +2,9 @@
 
 # Acme Cloudflare Docker Compose Traefik generator
 
-# Latest Traefik versions, edit as necessary
+# Edit as necessary
 
-TRAEFIK_V2=v2.11
-TRAEFIK_V3=v3.1
+TRAEFIK_IMAGE_VERSION=v3.1
 
 # DO NOT EDIT BELOW THIS LINE
 
@@ -19,29 +18,11 @@ popd() {
 
 WORK_DIR="${1:-$(pwd)}"
 
-read -p 'Please enter the dashboard host name e.g. tfk.eingress.io: ' HOST
-read -p 'Please enter the Cloudflare account email address: ' CF_EMAIL
-read -p 'Please enter the Cloudflare DNS api token: ' CF_TOKEN
+read -p 'Enter the Traefik dashboard host name e.g. traefik.eingress.io: ' HOST
+read -p 'Enter the Cloudflare account email address: ' CF_EMAIL
+read -p 'Enter the Cloudflare DNS api token: ' CF_TOKEN
+read -p 'Enter the Traefik dashboard user name: ' USER
 
-while true; do
-
-  read -p 'Should I use Traefik v2 or v3? (2/3): ' VERSION
-
-  case $VERSION in
-  2)
-    TRAEFIK_VERSION=$TRAEFIK_V2
-    break
-    ;;
-  3)
-    TRAEFIK_VERSION=$TRAEFIK_V3
-    break
-    ;;
-  *) echo Please enter 2 or 3 ;;
-  esac
-
-done
-
-read -p 'Traefik dashboard user name: ' USER
 PASSWORD=$(openssl passwd -apr1)
 
 mkdir -p $WORK_DIR
@@ -52,7 +33,7 @@ echo '' | tee .env .htpasswd
 echo "CF_API_EMAIL=${CF_EMAIL}" >>.env
 echo "CF_API_TOKEN=${CF_TOKEN}" >>.env
 echo "HOST_NAME=${HOST}" >>.env
-echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_VERSION}" >>.env
+echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_IMAGE_VERSION}" >>.env
 
 echo "$USER:$PASSWORD" >>.htpasswd
 
@@ -130,11 +111,10 @@ services:
 
 volumes:
   acme:
-
 EOF
 
 echo "Created .env, .htpasswd, and compose.yaml files in ${WORK_DIR}"
-echo "Thanks for using!"
+echo "Goodbye"
 
 popd
 
