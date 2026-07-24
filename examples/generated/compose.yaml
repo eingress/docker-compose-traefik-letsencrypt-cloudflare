@@ -1,6 +1,6 @@
-
 networks:
   global:
+    name: global
 
 services:
 
@@ -19,6 +19,8 @@ services:
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
 
       - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
       - --entrypoints.https.address=:443
       - --entryPoints.https.http3
       - --entryPoints.https.http3.advertisedport=443
@@ -40,11 +42,6 @@ services:
 
     labels:
       - traefik.http.middlewares.auth.basicauth.usersFile=/etc/traefik/.htpasswd
-      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
-
-      - traefik.http.routers.to-https.entrypoints=http
-      - traefik.http.routers.to-https.middlewares=to-https
-      - traefik.http.routers.to-https.rule=HostRegexp(`{host:.+}`)
 
       - traefik.http.routers.traefik.entrypoints=https
       - traefik.http.routers.traefik.middlewares=auth
@@ -71,4 +68,3 @@ services:
 
 volumes:
   acme:
-

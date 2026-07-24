@@ -25,4 +25,6 @@ Comment out the following line in ```compose.yaml``` for production.
 - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 ```
 
-See [examples](examples/) for how to configure services, and an example of generated output.
+All HTTP traffic is redirected to HTTPS at the entrypoint, and the Traefik dashboard is published on the generated host name behind HTTP basic auth (credentials in ```.htpasswd```).
+
+Services deployed alongside the stack join its external ```global``` network — see [examples](examples/) for how to configure services, and an example of generated output.

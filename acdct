@@ -2,45 +2,57 @@
 
 # Acme Cloudflare Docker Compose Traefik generator
 
+set -euo pipefail
+
 # Edit as necessary
 
 TRAEFIK_IMAGE_VERSION=v3.6
 
 # DO NOT EDIT BELOW THIS LINE
 
+# Silence push & pop
+
+# shellcheck disable=SC2120
 pushd() {
   command pushd "$@" >/dev/null
 }
 
+# shellcheck disable=SC2120
 popd() {
   command popd "$@" >/dev/null
 }
 
 WORK_DIR="${1:-$(pwd)}"
 
-read -p 'Enter the Traefik dashboard host name e.g. traefik.eingress.io: ' HOST
-read -p 'Enter the Cloudflare account email address: ' CF_EMAIL
-read -p 'Enter the Cloudflare DNS api token: ' CF_TOKEN
-read -p 'Enter the Traefik dashboard user name: ' USER
+read -rp 'Enter the Traefik dashboard host name e.g. traefik.eingress.io: ' HOST
+read -rp 'Enter the Cloudflare account email address: ' CF_EMAIL
+read -rsp 'Enter the Cloudflare DNS api token: ' CF_TOKEN
+echo
+read -rp 'Enter the Traefik dashboard user name: ' DASH_USER
+
+if [[ -z "$HOST" || -z "$CF_EMAIL" || -z "$CF_TOKEN" || -z "$DASH_USER" ]]; then
+  echo 'Error: host name, Cloudflare email, DNS token, and dashboard user name are all required.' >&2
+  exit 1
+fi
 
 PASSWORD=$(openssl passwd -apr1)
 
-mkdir -p $WORK_DIR
-pushd $WORK_DIR
+mkdir -p "$WORK_DIR"
+pushd "$WORK_DIR"
 
-echo '' | tee .env .htpasswd
+{
+  echo "CF_API_EMAIL=${CF_EMAIL}"
+  echo "CF_API_TOKEN=${CF_TOKEN}"
+  echo "HOST_NAME=${HOST}"
+  echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_IMAGE_VERSION}"
+} >.env
 
-echo "CF_API_EMAIL=${CF_EMAIL}" >>.env
-echo "CF_API_TOKEN=${CF_TOKEN}" >>.env
-echo "HOST_NAME=${HOST}" >>.env
-echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_IMAGE_VERSION}" >>.env
-
-echo "$USER:$PASSWORD" >>.htpasswd
+echo "$DASH_USER:$PASSWORD" >.htpasswd
 
 cat <<-EOF >compose.yaml
-
 networks:
   global:
+    name: global
 
 services:
 
@@ -59,6 +71,8 @@ services:
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
 
       - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
       - --entrypoints.https.address=:443
       - --entryPoints.https.http3
       - --entryPoints.https.http3.advertisedport=443
@@ -80,11 +94,6 @@ services:
 
     labels:
       - traefik.http.middlewares.auth.basicauth.usersFile=/etc/traefik/.htpasswd
-      - traefik.http.middlewares.to-https.redirectscheme.scheme=https
-
-      - traefik.http.routers.to-https.entrypoints=http
-      - traefik.http.routers.to-https.middlewares=to-https
-      - traefik.http.routers.to-https.rule=HostRegexp(\`{host:.+}\`)
 
       - traefik.http.routers.traefik.entrypoints=https
       - traefik.http.routers.traefik.middlewares=auth
@@ -114,7 +123,6 @@ volumes:
 EOF
 
 echo "Created .env, .htpasswd, and compose.yaml files in ${WORK_DIR}"
-echo "Goodbye"
 
 popd
 
