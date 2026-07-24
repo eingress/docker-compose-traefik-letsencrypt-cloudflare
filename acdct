@@ -41,6 +41,8 @@ mkdir -p "$WORK_DIR"
 pushd "$WORK_DIR"
 
 {
+  echo '# shellcheck disable=SC2034'
+  echo
   echo "CF_API_EMAIL=${CF_EMAIL}"
   echo "CF_API_TOKEN=${CF_TOKEN}"
   echo "HOST_NAME=${HOST}"
