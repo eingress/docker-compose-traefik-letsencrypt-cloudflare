@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Edit as necessary
 
-TRAEFIK_IMAGE_VERSION=v3.6
+TRAEFIK_IMAGE_VERSION=v3
 
 # DO NOT EDIT BELOW THIS LINE
 
