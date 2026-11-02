@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint generator
+        run: shellcheck acdct
+
+      - name: Validate examples
+        run: |
+          docker compose --project-directory examples/generated config -q
+          docker compose --project-directory examples/whoami config -q
+
+      - name: Check generated example is current
+        run: |
+          OUTPUT_DIR="$(mktemp -d)"
+          printf 'host\nemail\ntoken\nuser\npassword\npassword\n' | ./acdct "$OUTPUT_DIR"
+          diff "$OUTPUT_DIR/compose.yaml" examples/generated/compose.yaml
