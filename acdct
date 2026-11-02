@@ -10,48 +10,99 @@ TRAEFIK_IMAGE_VERSION=v3
 
 # DO NOT EDIT BELOW THIS LINE
 
-# Silence push & pop
-
-# shellcheck disable=SC2120
-pushd() {
-  command pushd "$@" >/dev/null
+usage() {
+  echo "Usage: $0 [-f|--force] [output directory]"
 }
 
-# shellcheck disable=SC2120
-popd() {
-  command popd "$@" >/dev/null
-}
+FORCE=false
+WORK_DIR=
 
-WORK_DIR="${1:-$(pwd)}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -f | --force)
+      FORCE=true
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      if [[ -n "$WORK_DIR" ]]; then
+        echo 'Error: only one output directory may be given.' >&2
+        usage >&2
+        exit 1
+      fi
+      WORK_DIR="$1"
+      ;;
+  esac
+  shift
+done
+
+WORK_DIR="${WORK_DIR:-$(pwd)}"
+
+ENV_FILE="$WORK_DIR/.env"
+HTPASSWD_FILE="$WORK_DIR/.htpasswd"
+COMPOSE_FILE="$WORK_DIR/compose.yaml"
+
+if ! command -v openssl >/dev/null; then
+  echo 'Error: openssl is required to hash the dashboard password.' >&2
+  exit 1
+fi
+
+if [[ "$FORCE" != true ]]; then
+  for FILE in "$ENV_FILE" "$HTPASSWD_FILE" "$COMPOSE_FILE"; do
+    if [[ -e "$FILE" ]]; then
+      echo "Error: $FILE already exists. Use --force to overwrite." >&2
+      exit 1
+    fi
+  done
+fi
 
 read -rp 'Enter the Traefik dashboard host name e.g. traefik.eingress.io: ' HOST
-read -rp 'Enter the Cloudflare account email address: ' CF_EMAIL
+read -rp "Enter the email address for Let's Encrypt notices: " ACME_EMAIL
 read -rsp 'Enter the Cloudflare DNS api token: ' CF_TOKEN
 echo
 read -rp 'Enter the Traefik dashboard user name: ' DASH_USER
 
-if [[ -z "$HOST" || -z "$CF_EMAIL" || -z "$CF_TOKEN" || -z "$DASH_USER" ]]; then
-  echo 'Error: host name, Cloudflare email, DNS token, and dashboard user name are all required.' >&2
+if [[ -z "$HOST" || -z "$ACME_EMAIL" || -z "$CF_TOKEN" || -z "$DASH_USER" ]]; then
+  echo "Error: host name, Let's Encrypt email, DNS token, and dashboard user name are all required." >&2
+  exit 1
+fi
+
+if [[ "$DASH_USER" == *:* ]]; then
+  echo 'Error: dashboard user name must not contain a colon.' >&2
   exit 1
 fi
 
 PASSWORD=$(openssl passwd -apr1)
 
 mkdir -p "$WORK_DIR"
-pushd "$WORK_DIR"
+
+# Remove first, as redirection keeps the mode of an existing file
+rm -f "$ENV_FILE" "$HTPASSWD_FILE" "$COMPOSE_FILE"
+
+# Secrets are readable by the owner only
+umask 077
 
 {
   echo '# shellcheck disable=SC2034'
   echo
-  echo "CF_API_EMAIL=${CF_EMAIL}"
+  echo "ACME_EMAIL=${ACME_EMAIL}"
   echo "CF_API_TOKEN=${CF_TOKEN}"
   echo "HOST_NAME=${HOST}"
   echo "TRAEFIK_IMAGE=traefik:${TRAEFIK_IMAGE_VERSION}"
-} >.env
+} >"$ENV_FILE"
 
-echo "$DASH_USER:$PASSWORD" >.htpasswd
+echo "$DASH_USER:$PASSWORD" >"$HTPASSWD_FILE"
 
-cat <<-EOF >compose.yaml
+umask 022
+
+cat <<EOF >"$COMPOSE_FILE"
 networks:
   global:
     name: global
@@ -64,28 +115,26 @@ services:
       - --api=true
       - --api.dashboard=true
 
-      - --certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=0
       - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
       - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
 
-      - --certificatesresolvers.letsencrypt.acme.email=\${CF_API_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.email=\${ACME_EMAIL}
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
 
       - --entrypoints.http.address=:80
       - --entrypoints.http.http.redirections.entrypoint.to=https
       - --entrypoints.http.http.redirections.entrypoint.scheme=https
       - --entrypoints.https.address=:443
-      - --entryPoints.https.http3
-      - --entryPoints.https.http3.advertisedport=443
+      - --entrypoints.https.http3
+      - --entrypoints.https.http3.advertisedport=443
 
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=global
       - --providers.docker=true
 
       # !!! IMPORTANT! Comment out or delete next line in production! !!!
       - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
-
-    env_file:
-      - ./.env
 
     environment:
       - CLOUDFLARE_DNS_API_TOKEN=\${CF_API_TOKEN}
@@ -95,6 +144,8 @@ services:
     image: \${TRAEFIK_IMAGE}
 
     labels:
+      - traefik.enable=true
+
       - traefik.http.middlewares.auth.basicauth.usersFile=/etc/traefik/.htpasswd
 
       - traefik.http.routers.traefik.entrypoints=https
@@ -114,8 +165,11 @@ services:
 
     restart: unless-stopped
 
+    security_opt:
+      - no-new-privileges:true
+
     volumes:
-      - .htpasswd:/etc/traefik/.htpasswd
+      - ./.htpasswd:/etc/traefik/.htpasswd:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
       - acme:/letsencrypt
@@ -125,7 +179,3 @@ volumes:
 EOF
 
 echo "Created .env, .htpasswd, and compose.yaml files in ${WORK_DIR}"
-
-popd
-
-exit 0

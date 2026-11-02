@@ -6,6 +6,9 @@ The main Traefik stack must already be running, as this service joins its extern
 network. Set `DEFAULT_NETWORK` in `.env` to match that network's name (`global` by
 default).
 
+Traefik only routes to containers labelled `traefik.enable=true`, so any service you
+add needs that label too.
+
 ## Usage
 
 ```sh

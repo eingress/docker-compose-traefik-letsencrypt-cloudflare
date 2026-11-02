@@ -8,14 +8,13 @@ services:
 
   whoami:
 
-    env_file:
-      - ./.env
-
     hostname: ${HOST_NAME}
 
     image: ${IMAGE_NAME}
 
     labels:
+      - traefik.enable=true
+
       - traefik.http.routers.${SERVICE_NAME}.entrypoints=https
       - traefik.http.routers.${SERVICE_NAME}.rule=Host(`${HOST_NAME}`)
       - traefik.http.routers.${SERVICE_NAME}.tls.certresolver=letsencrypt
